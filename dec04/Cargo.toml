@@ -1,0 +1,9 @@
+[package]
+name = "dec04"
+version = "0.1.0"
+authors = ["kevin <khwilson@gmail.com>"]
+
+[dependencies]
+regex = "1"
+chrono = "0.4.6"
+lazy_static = "1.2.0"
