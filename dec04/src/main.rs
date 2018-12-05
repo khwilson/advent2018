@@ -1,7 +1,7 @@
 #[macro_use] extern crate lazy_static;
 
 extern crate regex;
-extern crate chrono;
+extern crate time;
 
 use std::process;
 use std::env;
@@ -10,7 +10,8 @@ use std::io::{BufRead, BufReader};
 use std::collections::{HashMap, HashSet};
 
 use regex::Regex;
-use chrono::prelude::*;
+use time::Tm;
+use time::strptime;
 
 mod cmdline;
 
@@ -36,13 +37,13 @@ fn main() {
     } 
 
     if config.is_first_puzzle {
-        let mut sleep_times: HashMap<i64, u32> = HashMap::new();
-        let mut wake_times: HashMap<i64, u32> = HashMap::new();
-        let mut total_sleep: HashMap<i64, u32> = HashMap::new();
+        let mut sleep_times: HashMap<i64, i64> = HashMap::new();
+        let mut wake_times: HashMap<i64, i64> = HashMap::new();
+        let mut total_sleep: HashMap<i64, i64> = HashMap::new();
         for line in lines.iter() {
             match line.event {
-                GuardEvent::FallsAsleep => *sleep_times.entry(line.guard).or_insert(0) += line.date.minute(),
-                GuardEvent::WakesUp => *wake_times.entry(line.guard).or_insert(0) += line.date.minute(),
+                GuardEvent::FallsAsleep => *sleep_times.entry(line.guard).or_insert(0) += line.date.tm_min as i64,
+                GuardEvent::WakesUp => *wake_times.entry(line.guard).or_insert(0) += line.date.tm_min as i64,
                 _ => ()
             };
         }
@@ -54,10 +55,10 @@ fn main() {
         let mut by_minute = [0i32; 60];
         for line in lines.iter().filter(|x| x.guard == *max_guard) {
             match line.event {
-                GuardEvent::FallsAsleep => for min in line.date.minute()..60 {
+                GuardEvent::FallsAsleep => for min in line.date.tm_min..60 {
                     by_minute[min as usize] += 1;
                 },
-                GuardEvent::WakesUp => for min in line.date.minute()..60 {
+                GuardEvent::WakesUp => for min in line.date.tm_min..60 {
                     by_minute[min as usize] -= 1;
                 },
                 _ => ()
@@ -73,10 +74,10 @@ fn main() {
         for line in lines.iter().filter(|x| x.event != GuardEvent::StartsShift) {
             let val = by_minutes.get_mut(&line.guard).unwrap();
             match line.event {
-                GuardEvent::FallsAsleep => for min in line.date.minute()..60 {
+                GuardEvent::FallsAsleep => for min in line.date.tm_min..60 {
                     val[min as usize] += 1;
                 },
-                GuardEvent::WakesUp => for min in line.date.minute()..60 {
+                GuardEvent::WakesUp => for min in line.date.tm_min..60 {
                     val[min as usize] -= 1;
                 },
                 _ => ()
@@ -143,7 +144,7 @@ enum GuardEvent {
 
 #[derive(Eq, Ord, PartialEq, PartialOrd)]
 struct Line {
-    date: NaiveDateTime,
+    date: Tm,
     event: GuardEvent,
     guard: i64
 }
@@ -151,7 +152,7 @@ struct Line {
 impl Line {
     fn new(line: &String) -> Line {
         let (date, note) = split_string(line);
-        let date = NaiveDateTime::parse_from_str(&date, "%Y-%m-%d %H:%M").unwrap();
+        let date = strptime(&date, "%Y-%m-%d %H:%M").unwrap_or_else(|l| panic!("Error parsing time {}", l));
         let event = parse_event(&note);
         let guard = match event {
             GuardEvent::StartsShift => parse_guard(&note),
