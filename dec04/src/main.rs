@@ -5,12 +5,8 @@ extern crate chrono;
 
 use std::process;
 use std::env;
-use std::hash::Hash;
-use std::iter::FromIterator;
-use std::iter::repeat;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::cmp;
 use std::collections::{HashMap, HashSet};
 
 use regex::Regex;
@@ -30,7 +26,7 @@ fn main() {
     let mut current_guard = -1;
     for line in lines.iter_mut() {
         match line.event {
-            GuardEvent::START_SHIFT => {
+            GuardEvent::StartsShift => {
                 current_guard = line.guard;
             },
             _ => {
@@ -45,8 +41,8 @@ fn main() {
         let mut total_sleep: HashMap<i64, u32> = HashMap::new();
         for line in lines.iter() {
             match line.event {
-                GuardEvent::FALLS_ASLEEP => *sleep_times.entry(line.guard).or_insert(0) += line.date.minute(),
-                GuardEvent::WAKES_UP => *wake_times.entry(line.guard).or_insert(0) += line.date.minute(),
+                GuardEvent::FallsAsleep => *sleep_times.entry(line.guard).or_insert(0) += line.date.minute(),
+                GuardEvent::WakesUp => *wake_times.entry(line.guard).or_insert(0) += line.date.minute(),
                 _ => ()
             };
         }
@@ -58,10 +54,10 @@ fn main() {
         let mut by_minute = [0i32; 60];
         for line in lines.iter().filter(|x| x.guard == *max_guard) {
             match line.event {
-                GuardEvent::FALLS_ASLEEP => for min in line.date.minute()..60 {
+                GuardEvent::FallsAsleep => for min in line.date.minute()..60 {
                     by_minute[min as usize] += 1;
                 },
-                GuardEvent::WAKES_UP => for min in line.date.minute()..60 {
+                GuardEvent::WakesUp => for min in line.date.minute()..60 {
                     by_minute[min as usize] -= 1;
                 },
                 _ => ()
@@ -71,16 +67,16 @@ fn main() {
         println!("The answer is {} {} {}", max_guard, max_min, *max_guard * (max_min as i64));
     } else {
         let mut by_minutes: HashMap<i64, [i64; 60]> = HashMap::new();
-        for guard in lines.iter().filter(|x| x.event == GuardEvent::START_SHIFT).map(|x| x.guard).collect::<HashSet<i64>>().iter() {
+        for guard in lines.iter().filter(|x| x.event == GuardEvent::StartsShift).map(|x| x.guard).collect::<HashSet<i64>>().iter() {
             by_minutes.insert(*guard, [0; 60]);
         }
-        for line in lines.iter().filter(|x| x.event != GuardEvent::START_SHIFT) {
+        for line in lines.iter().filter(|x| x.event != GuardEvent::StartsShift) {
             let val = by_minutes.get_mut(&line.guard).unwrap();
             match line.event {
-                GuardEvent::FALLS_ASLEEP => for min in line.date.minute()..60 {
+                GuardEvent::FallsAsleep => for min in line.date.minute()..60 {
                     val[min as usize] += 1;
                 },
-                GuardEvent::WAKES_UP => for min in line.date.minute()..60 {
+                GuardEvent::WakesUp => for min in line.date.minute()..60 {
                     val[min as usize] -= 1;
                 },
                 _ => ()
@@ -120,11 +116,11 @@ fn split_string(line: &String) -> (String, String) {
 
 fn parse_event(note: &String) -> GuardEvent {
     if note.starts_with("Guard") {
-        return GuardEvent::START_SHIFT;
+        return GuardEvent::StartsShift;
     } else if note.starts_with("falls") {
-        return GuardEvent::FALLS_ASLEEP;
+        return GuardEvent::FallsAsleep;
     } else {
-        return GuardEvent::WAKES_UP;
+        return GuardEvent::WakesUp;
     }
 }
 
@@ -140,9 +136,9 @@ fn parse_guard(note: &String) -> i64 {
 
 #[derive(Eq, Ord, PartialEq, PartialOrd)]
 enum GuardEvent {
-    START_SHIFT,
-    FALLS_ASLEEP,
-    WAKES_UP,
+    StartsShift,
+    FallsAsleep,
+    WakesUp,
 }
 
 #[derive(Eq, Ord, PartialEq, PartialOrd)]
@@ -158,40 +154,9 @@ impl Line {
         let date = NaiveDateTime::parse_from_str(&date, "%Y-%m-%d %H:%M").unwrap();
         let event = parse_event(&note);
         let guard = match event {
-            GuardEvent::START_SHIFT => parse_guard(&note),
+            GuardEvent::StartsShift => parse_guard(&note),
             _ => -1i64,
         };
         Line {date, event, guard }
-    }
-}
-
-type SummerMap<T> = HashMap<T, i64>;
-
-#[derive(Clone, PartialEq, Eq, Debug, Default)]
-struct Summer<T: Hash + Eq> {
-    map: SummerMap<T>,
-}
-
-impl<T> Summer<T>
-where
-    T: Hash + Eq,
-{
-    fn new() -> Summer<T> {
-        Summer { map: HashMap::new() }
-    }
-}
-
-impl FromIterator<(i64, i64)> for Summer<i64>
-{
-    fn from_iter<I: IntoIterator<Item=(i64, i64)>>(iter: I) -> Self {
-        let mut summer = Summer::new();
-        for (guard, time) in iter {
-            let total_time : i64 = match summer.map.get(&guard) {
-                Some(total) => total + time,
-                None => time,
-            };
-            summer.map.insert(guard, total_time);
-        }
-        summer
     }
 }
