@@ -1,26 +1,17 @@
-#[macro_use]
-extern crate lazy_static;
-
-extern crate regex;
-extern crate time;
-
 use std::collections::{HashMap, HashSet};
-use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::process;
+use std::path::Path;
 
+use lazy_static::lazy_static;
 use regex::Regex;
+use structopt::StructOpt;
 use time::{strptime, Tm};
 
 mod cmdline;
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    let config = cmdline::Config::new(&args).unwrap_or_else(|err| {
-        println!("Problem parsing arguments: {}", err);
-        process::exit(1);
-    });
+    let config = cmdline::Config::from_args();
 
     let mut lines = read_lines(&config.filename);
     lines.sort();
@@ -55,7 +46,7 @@ fn main() {
         };
     }
 
-    if config.is_first_puzzle {
+    if !config.is_second_puzzle {
         let mut sleep_times: HashMap<i64, i64> = HashMap::new();
         let mut wake_times: HashMap<i64, i64> = HashMap::new();
         let mut total_sleep: HashMap<i64, i64> = HashMap::new();
@@ -154,7 +145,7 @@ fn main() {
     }
 }
 
-fn read_lines(filename: &String) -> Vec<Line> {
+fn read_lines(filename: &Path) -> Vec<Line> {
     let file = File::open(filename).expect("Could not open file");
 
     BufReader::new(file)

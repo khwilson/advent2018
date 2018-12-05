@@ -1,20 +1,12 @@
+use structopt::StructOpt;
+use std::path::PathBuf;
+
+#[derive(StructOpt)]
 pub struct Config {
-    pub filename: String,
-    pub is_first_puzzle: bool,
-}
-
-impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 2 {
-            return Err("You must pass the filename");
-        }
-
-        let filename = args[1].clone();
-
-        let is_first_puzzle = args.len() == 2;
-        Ok(Config {
-            filename,
-            is_first_puzzle,
-        })
-    }
+    /// The path of a file to parse
+    #[structopt(parse(from_os_str))]
+    pub filename: PathBuf,
+    /// We are running as the second puzzle
+    #[structopt(long = "second")]
+    pub is_second_puzzle: bool,
 }
