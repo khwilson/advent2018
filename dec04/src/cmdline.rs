@@ -8,10 +8,13 @@ impl Config {
         if args.len() < 2 {
             return Err("You must pass the filename");
         }
-        
+
         let filename = args[1].clone();
 
         let is_first_puzzle = args.len() == 2;
-        Ok(Config { filename, is_first_puzzle })
+        Ok(Config {
+            filename,
+            is_first_puzzle,
+        })
     }
 }
