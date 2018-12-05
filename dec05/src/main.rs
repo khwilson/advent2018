@@ -22,14 +22,14 @@ fn main() {
     } else {
         // THis makes me feel dumb. What is the parent type of Chars and Filter<Chars>?
         let answer = "abcdefghijklmnopqrstuvwxyz".chars()
-            .map(|del_ch| count_reaction(input.chars().filter(|x| x.to_ascii_lowercase() != del_ch).collect::<String>().chars()))
+            .map(|del_ch| count_reaction(input.chars().filter(|x| x.to_ascii_lowercase() != del_ch)))
             .min().unwrap();
         println!("Answer is {}", answer);
     }
 
 }
 
-fn count_reaction(iter: Chars) -> usize {
+fn count_reaction(iter: impl Iterator<Item=char>) -> usize {
     let mut stack: LinkedList<char> = LinkedList::new();
     for ch in iter {
         let should_push: bool = match stack.back() {
