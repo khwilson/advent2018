@@ -24,6 +24,25 @@ fn main() {
 
     let mut lines = read_lines(&config.filename);
     lines.sort();
+    {
+        let line1 = lines.iter();
+        let line2 = lines.iter().skip(1);
+        for (left, right) in line1.zip(line2) {
+            assert!(left.odate < right.odate, "{} < {}", left.odate, right.odate);
+            assert!(
+                left.date.to_timespec() < right.date.to_timespec(),
+                "{:?} < {:?}",
+                left.date.to_timespec(),
+                right.date.to_timespec()
+            );
+            assert!(
+                left.date < right.date,
+                "{} < {}",
+                left.date.rfc3339(),
+                right.date.rfc3339()
+            );
+        }
+    }
     let mut current_guard = -1;
     for line in lines.iter_mut() {
         match line.event {
@@ -183,6 +202,7 @@ enum GuardEvent {
 #[derive(Eq, Ord, PartialEq, PartialOrd)]
 struct Line {
     date: Tm,
+    odate: String,
     event: GuardEvent,
     guard: i64,
 }
@@ -198,6 +218,11 @@ impl Line {
             GuardEvent::StartsShift => parse_guard(&note),
             _ => -1i64,
         };
-        Line { date, event, guard }
+        Line {
+            date,
+            odate,
+            event,
+            guard,
+        }
     }
 }
