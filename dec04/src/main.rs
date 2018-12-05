@@ -189,9 +189,10 @@ struct Line {
 
 impl Line {
     fn new(line: &String) -> Line {
-        let (date, note) = split_string(line);
-        let date = strptime(&date, "%Y-%m-%d %H:%M")
+        let (odate, note) = split_string(line);
+        let date = strptime(&odate, "%Y-%m-%d %H:%M")
             .unwrap_or_else(|l| panic!("Error parsing time {}", l));
+        assert_eq!(odate, date.strftime("%Y-%m-%d %H:%M").unwrap().to_string());
         let event = parse_event(&note);
         let guard = match event {
             GuardEvent::StartsShift => parse_guard(&note),
