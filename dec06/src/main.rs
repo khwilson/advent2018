@@ -22,6 +22,8 @@ fn main() {
     let input = read_file(&config.filename);
 
     if config.is_first_puzzle {
+        // We're supposed to check for non-infinite area. But it's much faster to
+        // code to just check if you shift that you get the same result on a large enough grid haha
         let max_point = input.iter().map(|p| p.maxx()).max().unwrap();
         let areas_first = get_areas(2 * max_point, &input);
 
@@ -49,6 +51,10 @@ fn main() {
         println!("Answer is {} for point {}", max_area, max_point);
 
     } else {
+        // We're supposed to find all points that are at most 10000 total distance from
+        // all the listed points. Again, we could be smart, or we could just
+        // shift everything over by 10000 and then work on a _HUGE_ grid and count
+        // the number of points that are 10000 or less away :)
         let shifted_input: Vec<Point> = input.iter().map(|p| Point::new(p.x + 10000, p.y + 10000, p.num)).collect();
         let max_point = input.iter().map(|p| p.maxx()).max().unwrap();
         let mut total_count = 0;
