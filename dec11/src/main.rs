@@ -45,9 +45,9 @@ struct Grid {
 impl Grid {
     fn new(width: usize, height: usize) -> Grid {
         let mut values: Vec<Vec<i64>> = Vec::new();
-        for y in 0..height {
+        for _ in 0..height {
             let mut row: Vec<i64> = Vec::new();
-            for x in 0..width {
+            for _ in 0..width {
                 row.push(0);
             }
             values.push(row);
